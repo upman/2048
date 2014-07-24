@@ -461,12 +461,19 @@ hr {
   margin-bottom: 0;
 }
 
-.restart-button {
+.restart-button, .ai-play-toggle-button {
   @include button;
   display: block;
   text-align: center;
   float: right;
 }
+
+.ai-play-toggle-button {
+  position:relative;
+  top: 5px;
+}
+
+
 
 .game-explanation {
   margin-top: 50px;

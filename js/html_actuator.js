@@ -3,9 +3,22 @@ function HTMLActuator() {
   this.scoreContainer   = document.querySelector(".score-container");
   this.bestContainer    = document.querySelector(".best-container");
   this.messageContainer = document.querySelector(".game-message");
+  this.aiPlayToggleButton = document.querySelector(".ai-play-toggle-button");
+
 
   this.score = 0;
 }
+
+
+HTMLActuator.prototype.toggleAiButton = function(){
+
+if(this.aiPlayToggleButton.innerHTML === "Start AI"){
+  this.aiPlayToggleButton.innerHTML = "Stop AI";
+} else{
+  this.aiPlayToggleButton.innerHTML = "Start AI";
+}
+
+};
 
 HTMLActuator.prototype.actuate = function (grid, metadata) {
   var self = this;

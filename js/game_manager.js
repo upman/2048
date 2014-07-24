@@ -1,20 +1,55 @@
-function GameManager(size, InputManager, Actuator, StorageManager) {
+function GameManager(size, InputManager, Actuator, StorageManager, AiPlayer) {
   this.size           = size; // Size of the grid
   this.inputManager   = new InputManager;
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
-
+  this.aiPlayer       = new AiPlayer;
   this.startTiles     = 2;
 
-  this.inputManager.on("move", this.move.bind(this));
+  this.inputManager.on("move", this.moveIfAiNotPlaying.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
+  this.inputManager.on("aiPlayToggle",this.aiPlayToggle.bind(this));
+ 
 
   this.setup();
 }
 
+
+//Start/Stop AI Player
+GameManager.prototype.aiPlayToggle = function () {
+  this.actuator.toggleAiButton();
+  if(this.aiPlaying){
+    this.aiPlaying = false;
+  } else{
+    this.aiPlaying = true; 
+    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),1000);
+    
+  }
+
+};
+
+GameManager.prototype.aiPlay = function(){
+  if(this.aiPlaying){
+    console.log("Playing");
+    var direction = this.aiPlayer.bestMove(1,2,3,4);
+    this.move(direction);
+  }
+  else
+  {
+    window.clearInterval(this.intervalTimer);
+  }
+
+};
+
+
+
+
+
+
 // Restart the game
 GameManager.prototype.restart = function () {
+
   this.storageManager.clearGameState();
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup();
@@ -49,6 +84,7 @@ GameManager.prototype.setup = function () {
     this.over        = false;
     this.won         = false;
     this.keepPlaying = false;
+    this.aiPlaying   = false;
 
     // Add the initial tiles
     this.addStartTiles();
@@ -126,6 +162,15 @@ GameManager.prototype.moveTile = function (tile, cell) {
   tile.updatePosition(cell);
 };
 
+
+GameManager.prototype.moveIfAiNotPlaying = function (direction) {
+  if(this.aiPlaying){
+    return;
+  }else{
+    this.move(direction);
+  }
+};
+
 // Move tiles on the grid in the specified direction
 GameManager.prototype.move = function (direction) {
   // 0: up, 1: right, 2: down, 3: left
@@ -185,7 +230,7 @@ GameManager.prototype.move = function (direction) {
     if (!this.movesAvailable()) {
       this.over = true; // Game over!
     }
-
+    
     this.actuate();
   }
 };

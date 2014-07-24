@@ -24,6 +24,7 @@ KeyboardInputManager.prototype.on = function (event, callback) {
 
 KeyboardInputManager.prototype.emit = function (event, data) {
   var callbacks = this.events[event];
+
   if (callbacks) {
     callbacks.forEach(function (callback) {
       callback(data);
@@ -72,6 +73,7 @@ KeyboardInputManager.prototype.listen = function () {
   this.bindButtonPress(".retry-button", this.restart);
   this.bindButtonPress(".restart-button", this.restart);
   this.bindButtonPress(".keep-playing-button", this.keepPlaying);
+  this.bindButtonPress(".ai-play-toggle-button", this.aiPlayToggle);
 
   // Respond to swipe events
   var touchStartClientX, touchStartClientY;
@@ -136,6 +138,13 @@ KeyboardInputManager.prototype.keepPlaying = function (event) {
   event.preventDefault();
   this.emit("keepPlaying");
 };
+
+KeyboardInputManager.prototype.aiPlayToggle = function (event) {
+  event.preventDefault();
+  this.emit("aiPlayToggle");
+};
+
+
 
 KeyboardInputManager.prototype.bindButtonPress = function (selector, fn) {
   var button = document.querySelector(selector);
