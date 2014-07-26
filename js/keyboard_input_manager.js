@@ -74,6 +74,8 @@ KeyboardInputManager.prototype.listen = function () {
   this.bindButtonPress(".restart-button", this.restart);
   this.bindButtonPress(".keep-playing-button", this.keepPlaying);
   this.bindButtonPress(".ai-play-toggle-button", this.aiPlayToggle);
+  this.bindButtonPress(".vroom-button", this.speedUpAi);
+  this.bindButtonPress(".brake-button",this.slowDownAi);
 
   // Respond to swipe events
   var touchStartClientX, touchStartClientY;
@@ -137,6 +139,16 @@ KeyboardInputManager.prototype.restart = function (event) {
 KeyboardInputManager.prototype.keepPlaying = function (event) {
   event.preventDefault();
   this.emit("keepPlaying");
+};
+
+KeyboardInputManager.prototype.slowDownAi =  function(event){
+  event.preventDefault();
+  this.emit("slowDownAi");
+};
+
+KeyboardInputManager.prototype.speedUpAi =  function(event){
+  event.preventDefault();
+  this.emit("speedUpAi");
 };
 
 KeyboardInputManager.prototype.aiPlayToggle = function (event) {

@@ -1,15 +1,18 @@
 function GameManager(size, InputManager, Actuator, StorageManager, AiPlayer) {
   this.size           = size; // Size of the grid
+  this.aiPlayInterval     = 1000;
   this.inputManager   = new InputManager;
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
-  this.aiPlayer       = new AiPlayer;
+  this.aiPlayer       = new AiPlayer();
   this.startTiles     = 2;
 
   this.inputManager.on("move", this.moveIfAiNotPlaying.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
   this.inputManager.on("aiPlayToggle",this.aiPlayToggle.bind(this));
+  this.inputManager.on("slowDownAi",this.slowDownAi.bind(this));
+  this.inputManager.on("speedUpAi",this.speedUpAi.bind(this));
  
 
   this.setup();
@@ -18,12 +21,13 @@ function GameManager(size, InputManager, Actuator, StorageManager, AiPlayer) {
 
 //Start/Stop AI Player
 GameManager.prototype.aiPlayToggle = function () {
+
   this.actuator.toggleAiButton();
   if(this.aiPlaying){
     this.aiPlaying = false;
   } else{
     this.aiPlaying = true; 
-    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),500);
+    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),this.aiPlayInterval);
     
   }
 
@@ -31,8 +35,11 @@ GameManager.prototype.aiPlayToggle = function () {
 
 GameManager.prototype.aiPlay = function(){
   if(this.aiPlaying){
-    console.log("Playing");
-    var state = []
+    if(this.over){
+      this.aiPlayToggle();
+      this.aiPlaying = false;
+    }
+    var state = [];
     for (var i = 0; i < this.grid.size; i++) {
       state.push([]);
     };
@@ -52,6 +59,26 @@ GameManager.prototype.aiPlay = function(){
 
 };
 
+GameManager.prototype.speedUpAi = function(){
+  if(!this.aiPlaying || this.aiPlayInterval <= 75){
+    return;
+  }else{
+    window.clearInterval(this.intervalTimer);
+    this.aiPlayInterval /= 2;
+    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),this.aiPlayInterval);
+  }
+};
+
+GameManager.prototype.slowDownAi = function(){
+  if(!this.aiPlaying || this.aiPlayInterval >= 1000){
+    return;
+  }else{
+    window.clearInterval(this.intervalTimer);
+    this.aiPlayInterval *= 2;
+    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),this.aiPlayInterval); 
+  }
+
+};
 
 
 
@@ -60,6 +87,9 @@ GameManager.prototype.aiPlay = function(){
 // Restart the game
 GameManager.prototype.restart = function () {
 
+  if(this.aiPlaying){
+    this.aiPlayToggle();
+  }
   this.storageManager.clearGameState();
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup();
@@ -238,7 +268,11 @@ GameManager.prototype.move = function (direction) {
     this.addRandomTile();
 
     if (!this.movesAvailable()) {
-      this.over = true; // Game over!
+      this.over = true;
+      if(this.aiPlaying){
+        this.aiPlayToggle();
+       // Game over!
+      }
     }
     
     this.actuate();

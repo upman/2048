@@ -6,223 +6,315 @@ function AiPlayer() {
 //Map 
 //0 => up, 1 => right, 2 => down, 3 => left
 AiPlayer.prototype.bestMove = function (state, size) {
-    var nextStates = [];
-    for (var i = 0; i < 4; i++) {
-        var copy = this._copyArray(state);
-        
-        var t = this._move(copy, size, i);
-        
-        
-        
-        if (this._sameStates(state, t, size)) {
-            continue;
-        } else {
-            nextStates.push({
-                weight: this._weight(t,size),
-                direction: i,
-                count: this._tileCount(t,size)
-            });
-        }
+	var nextStates = [];
+	for (var i = 0; i < 4; i++) {
+		var copy = this._copyArray(state);
+		
+		var t = this._move(copy, size, i);
+		
+		
+		
+		if (this._sameStates(state, t, size)) {
+			continue;
+		} else {
 
-    }
-    copy = this._copyArray(state);
-    console.log(JSON.stringify(this._move(copy,size,1)));
-    console.log(JSON.stringify(nextStates));
+			var weight 	  = this._weight(t,size),
+				d 		  = i,
+				count 	  = this._tileCount(t,size),
+				mono      = this._monotonicity(t,size),
+				cornerMax = this._maxInCorner(t,size),
+				c         = (mono * 750) + (cornerMax * 1000) /((weight) + (count*100)); //the constants chosen arbitrarily (still need to be adjusted)
 
-    if(nextStates.length === 0) {
- 
-        return null;
-    } else {
-        var min = nextStates[0];
-        for (i = 1; i < nextStates.length; i++) {
-            if (nextStates[i].count < min.count) {
-                min = nextStates[i];
-            }
-            if(nextStates[i].count == min.count && nextStates[i].weight < min.weight){
-            	min = nextStates[i];	
-            }
+			nextStates.push({
+				favorability: c,
+				direction: d,
+				corner: cornerMax
 
-            return min.direction;
-        }
-    }
+			});
+		}	
 
-    //console.log(JSON.stringify(copy));
-    //var w = this._weight(copy,size);
-    //console.log(w);
-    //this._move(copy,size,2);
-    //var a = [2,2,null,8];
-    //a = this._crunchIdenticalPairs(a,4);
-    //console.log(a);
-    //console.log(JSON.stringify(this._move(copy,4,3)));
+	}
+	
 
-    //return this._randRoundoff(Math.random() * 3);
+	var max = nextStates[0];
+	for (i = 1; i < nextStates.length; i++) {
+
+		if (nextStates[i].favorability > max.favorability) {
+			max = nextStates[i];
+		}
+
+	}
+	
+	return max.direction;
+	
+
+	//return this._randRoundoff(Math.random() * 3);
 };
 
 
 AiPlayer.prototype._sameStates = function(state1, state2, size) {
-    for (var i = 0; i < size; i++) {
-        for (var j = 0; j < size; j++) {
-            if (state1[i][j] != state2[i][j]) {
-                return false;
-            }
-        }
-    }
+	for (var i = 0; i < size; i++) {
+		for (var j = 0; j < size; j++) {
+			if (state1[i][j] != state2[i][j]) {
+				return false;
+			}
+		}
+	}
 
-    return true;
+	return true;
 
 };
 
 AiPlayer.prototype._randRoundoff = function (value) {
-    return Math.random() < 0.5 ? Math.floor(value) : Math.ceil(value);
+	return Math.random() < 0.5 ? Math.floor(value) : Math.ceil(value);
 };
 
 
 AiPlayer.prototype._copyArray = function (arr) {
-    return arr.map(function (element) {
-        return element.slice();
-    });
+	return arr.map(function (element) {
+		return element.slice();
+	});
 
 };
 
 AiPlayer.prototype._tileCount = function(arr,size){
 	var count = 0;
 	for (var i = 0; i < size; i++) {
-        for (var j = 0; j < size; j++) {
-            if (arr[i][j]!=null) {
-                count+=1;
-            }
-        }
-    }
-    return count;
-}
+		for (var j = 0; j < size; j++) {
+			if (arr[i][j]!=null) {
+				count+=1;
+			}
+		}
+	}
+	return count;
+};
 
 AiPlayer.prototype._transposeArray = function (arr, size) {
-    var t = [];
-    for (var i = 0; i < size; i++) {
-        t[i] = [];
-        for (var j = 0; j < size; j++) {
-            t[i][j] = arr[j][i];
-        }
-    }
-    return t;
+	var t = [];
+	for (var i = 0; i < size; i++) {
+		t[i] = [];
+		for (var j = 0; j < size; j++) {
+			t[i][j] = arr[j][i];
+		}
+	}
+	return t;
 };
 
-AiPlayer.prototype._weight = function (arr, size) {
-    var weight = 0;
-    var offsets = [
-        [-1, -1],
-        [-1, 0],
-        [-1, 1],
-        [0, -1],
-        [0,1],
-        [1,-1],
-        [1,0],
-        [1,1]
-    ];
-    for (var i = 0; i < size; i++) {
-        for (var j = 0; j < size; j++) {
-            if (arr[i][j] === null) {
-                continue;
-            }
+AiPlayer.prototype._maxInCorner = function(arr,size){
+	var max = 0,
+	x,
+	y;
 
+	for(var i = 0; i < size; i++){
+		for(var j = 0; j< size; j++){
+			if(arr[i][j] > max){
+				max = arr[i][j];
+				x = i;
+				y = j; 
+			}
+		}
+	}
 
-            for (var x = 0; x < offsets.length; x++) {
-                var k = offsets[x][0];
-                var l = offsets[x][1];
-                if (this._areValidIndices(i + k, j + l, size) && arr[i + k][j + l] !== null) {
-                    weight += (Math.abs(arr[i][j] - arr[i + k][j + l]));
-                }
-            }
-
-        }
-    }
-
-    return weight;
-
-
+	if((x==0 || x==size - 1) && (y==0 || y==size - 1)){
+		return 1;
+	}else{
+		return 0;
+	}
 };
 
+AiPlayer.prototype._monotonicity = function(arr,size){
+	
+	var mono = 0;
+
+	
+	for(var i = 0; i < size; i++ ){
+
+		var  vMaxInc   = 1,
+		vStartInc = 0,
+		vMaxDec   = 1,
+		vStartDec = 0,
+		hMaxInc   = 1,
+		hStartInc = 0,
+		hMaxDec   = 1,
+		hStartDec = 0;
+		
+		for (var j = 1; j < size; j++) {
+				//vertical
+				if (arr[i][j] >= arr[i][j - 1]) {
+					if (j - vStartInc + 1 > vMaxInc) {
+						vMaxInc = j - vStartInc + 1;  
+					}
+				} else {
+
+					vStartInc = j;
+				}
+
+
+				if (arr[i][j] <= arr[i][j - 1]) {
+					if (j - vStartDec + 1 > vMaxDec) {
+						vMaxDec = j - vStartDec + 1;  
+					}
+				} else {
+
+					vStartDec = j;
+				}
+
+
+				//Horizontal
+				if (arr[j][i] >= arr[j - 1][i]) {
+					if (j - hStartInc + 1 > hMaxInc) {
+						hMaxInc = j - hStartInc + 1;  
+					}
+				} else {
+
+					hStartInc = j;
+				}
+
+
+				if (arr[j][i] <= arr[j - 1][i]) {
+					if (j - hStartDec + 1 > hMaxDec) {
+						hMaxDec = j - hStartDec + 1;  
+					}
+				} else {
+
+					hStartDec = j;
+				}
+
+
+			}
+			//mono+= vMaxDec/size;
+
+			//if(i%2 === 0){
+			//	mono+= hMaxInc/size;
+			//}else{
+			//	mono+= hMaxDec;
+			//}
+
+			mono += Math.max(vMaxInc,vMaxDec)/size;
+			mono += Math.max(hMaxInc,hMaxDec)/size;
+		}
+
+
+		return mono;
+
+	};
+
+	AiPlayer.prototype._weight = function (arr, size) {
+		var weight = 0;
+		var offsets = [
+		[-1, -1],
+		[-1, 0],
+		[-1, 1],
+		[0, -1],
+		[0,1],
+		[1,-1],
+		[1,0],
+		[1,1]
+		];
+		for (var i = 0; i < size; i++) {
+			for (var j = 0; j < size; j++) {
+				if (arr[i][j] === null) {
+					continue;
+				}
+
+
+				for (var x = 0; x < offsets.length; x++) {
+					var k = offsets[x][0];
+					var l = offsets[x][1];
+					if (this._isValidIndex(i+k,size) && this._isValidIndex(j+l,size) && arr[i + k][j + l] !== null) {
+						weight += (Math.abs(arr[i][j] - arr[i + k][j + l]));
+					}
+				}
+
+			}
+		}
+
+		return weight;
+
+
+	};
 
 
 
 
-AiPlayer.prototype._areValidIndices = function (i, j, size) {
-    if (i >= 0 && j >= 0 && i < size && j < size) {
-        return true;
-    } else {
 
-        return false;
-    }
-};
+	AiPlayer.prototype._isValidIndex = function (i, size) {
+		if (i >= 0 && i < size) {
+			return true;
+		} else {
 
-AiPlayer.prototype._move = function (arr, size, direction) {
+			return false;
+		}
+	};
 
-    if (direction == 3 || direction == 1) {
-        arr = this._transposeArray(arr, size);
-    }
+	AiPlayer.prototype._move = function (arr, size, direction) {
 
-    if (direction == 2 || direction == 1) {
-        arr = arr.map(function (element) {
-            return element.reverse();
-        });
-    }
+		if (direction == 3 || direction == 1) {
+			arr = this._transposeArray(arr, size);
+		}
 
-
-    for (var i = 0; i < size; i++) {
-        arr[i] = this._crunchIdenticalPairs(arr[i], size);
-    }
+		if (direction == 2 || direction == 1) {
+			arr = arr.map(function (element) {
+				return element.reverse();
+			});
+		}
 
 
-    if (direction == 2 || direction == 1) {
-        arr = arr.map(function (element) {
-            return element.reverse();
-        });
-    }
-
-    if (direction == 3 || direction == 1) {
-        arr = this._transposeArray(arr, size);
-    }
-
-    return arr;
-};
+		for (var i = 0; i < size; i++) {
+			arr[i] = this._crunchIdenticalPairs(arr[i], size);
+		}
 
 
-AiPlayer.prototype._crunchIdenticalPairs = function (arr, size) {
-    var i = 0;
-    while (i < size - 1) {
-        if (arr[i] !== null) {
-            if (arr[i] == arr[i + 1]) {
-                arr[i] += arr[i + 1];
-                arr = this._pullUp(arr, size, i + 1);
+		if (direction == 2 || direction == 1) {
+			arr = arr.map(function (element) {
+				return element.reverse();
+			});
+		}
 
-            }
-            i += 1;
+		if (direction == 3 || direction == 1) {
+			arr = this._transposeArray(arr, size);
+		}
 
-        } else {
-            var j = i;
-            while (j < size - 1 && arr[i] === null) {
-                arr = this._pullUp(arr, size, i);
-                j += 1;
-            }
-            if (j >= size - 1) {
-                break;
-            }
+		return arr;
+	};
 
 
-        }
-    }
+	AiPlayer.prototype._crunchIdenticalPairs = function (arr, size) {
+		var i = 0;
+		while (i < size - 1) {
+			if (arr[i] !== null) {
+				if (arr[i] == arr[i + 1]) {
+					arr[i] += arr[i + 1];
+					arr = this._pullUp(arr, size, i + 1);
 
-    return arr;
-};
+				}
+				i += 1;
 
-AiPlayer.prototype._pullUp = function (arr, size, from) {
+			} else {
+				var j = i;
+				while (j < size - 1 && arr[i] === null) {
+					arr = this._pullUp(arr, size, i);
+					j += 1;
+				}
+				if (j >= size - 1) {
+					break;
+				}
 
-    for (var i = from; i < size - 1; i++) {
-        arr[i] = arr[i + 1];
-    }
 
-    arr[size - 1] = null;
+			}
+		}
 
-    return arr;
+		return arr;
+	};
 
-};
+	AiPlayer.prototype._pullUp = function (arr, size, from) {
+
+		for (var i = from; i < size - 1; i++) {
+			arr[i] = arr[i + 1];
+		}
+
+		arr[size - 1] = null;
+
+		return arr;
+
+	};
