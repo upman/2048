@@ -23,7 +23,7 @@ GameManager.prototype.aiPlayToggle = function () {
     this.aiPlaying = false;
   } else{
     this.aiPlaying = true; 
-    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),1000);
+    this.intervalTimer = window.setInterval(this.aiPlay.bind(this),500);
     
   }
 
@@ -32,7 +32,17 @@ GameManager.prototype.aiPlayToggle = function () {
 GameManager.prototype.aiPlay = function(){
   if(this.aiPlaying){
     console.log("Playing");
-    var direction = this.aiPlayer.bestMove(1,2,3,4);
+    var state = []
+    for (var i = 0; i < this.grid.size; i++) {
+      state.push([]);
+    };
+
+    for(var i = 0; i< this.grid.size; i++) {
+      for (var j = 0; j < this.grid.size; j++) {
+        this.grid.cells[i][j] === null ? state[i][j] = null : state[i][j] = this.grid.cells[i][j].value;       
+      };
+    }
+    var direction = this.aiPlayer.bestMove(state,this.grid.size);
     this.move(direction);
   }
   else
