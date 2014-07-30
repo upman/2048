@@ -18,16 +18,16 @@ AiPlayer.prototype.bestMove = function (state, size) {
 			continue;
 		} else {
 
-			var weight 	  = this._weight(t,size),
-			    weight1   = this._weight1(t,size),
+			var weight 	  = this._weight1(t,size),
+			    //weight1   = this._weight1(t,size),
 				d 		  = i,
 				count 	  = this._tileCount(t,size),
 				mono      = this._monotonicity(t,size),
 				cornerMax = this._maxInCorner(t,size),
-				c         = (mono * 750) + (cornerMax * 1000) /((weight) + (count*100)), //the constants chosen arbitrarily (still need to be adjusted)
-				c1        = (mono * 750) + (cornerMax * 1000) /((weight1) + (count*100)); 
-				if(c1>c)
-					c = c1
+				c         = (mono * 750) + (cornerMax * 1000) /((weight) + (count*100)); //the constants chosen arbitrarily (still need to be adjusted)
+				//c1        = (mono * 750) + (cornerMax * 1000) /((weight1) + (count*100)); 
+				//if(c1>c)
+				//	c = c1
 			nextStates.push({
 				favorability: c,
 				direction: d,
@@ -54,7 +54,50 @@ AiPlayer.prototype.bestMove = function (state, size) {
 	//return this._randRoundoff(Math.random() * 3);
 };
 
+AiPlayer.prototype._miniMax = function(state,size,depth,opponent,x,y){
+	
+	if(depth == this.minMaxDepth){
+			return this._favourability(state,size);
+		}
 
+	if(!opponent){
+		
+
+		for(var i=0;i<4;i++){
+			copy = this._copyArray(state,size);
+			copy = this._move(copy,size,i);
+			x = Math.max(x,this._miniMax(copy,size,depth+1,true,x,y));
+		}
+ 
+	}
+}else{
+	if(depth == this.minMaxDepth){
+
+	}else{
+		var emptyPlaces = this._emptyPlaces(state,size);
+		forEach(emptyPlaces,function(place){
+			state[place[0]][place[1]];
+			x = Math.min(x,eval(state));
+		}.bind(this));
+	}
+}
+
+return x;
+}
+
+AiPlayer.prototype._emptyPlaces = function(state,size){
+	var places;
+	for(var i=0; i< size; i++){
+		for(var j=0; j< size; j++){
+			if (state[i][j]){
+				places.push([i,j]);
+			}
+		}
+	}
+
+	return places;
+
+}
 AiPlayer.prototype._sameStates = function(state1, state2, size) {
 	for (var i = 0; i < size; i++) {
 		for (var j = 0; j < size; j++) {
@@ -236,6 +279,7 @@ AiPlayer.prototype._monotonicity = function(arr,size){
 
 
 	};
+	
 	AiPlayer.prototype._weight1 = function (arr, size) {
 		var weight = 0;
 		var offsets = [
@@ -266,7 +310,7 @@ AiPlayer.prototype._monotonicity = function(arr,size){
 
 
 	};
-
+	
 
 
 
